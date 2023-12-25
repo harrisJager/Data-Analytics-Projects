@@ -1,0 +1,164 @@
+---
+title: "Decision Tree Modelling using pengiun dataset"
+author: "Harris Rizwan"
+date: "2023-12-22"
+output: html_document
+---
+
+Loading data
+
+
+```{r}
+
+install.packages('caret')
+install.packages("rpart.plot")
+
+library(caret)
+
+```
+
+
+
+```{r}
+
+data <- read.csv2("E:\\AppDS Semester 1\\IML assignment\\Decision Tree Modelling using pengiun dataset\\PenguinsWithoutMissingValues.csv")
+
+head(data)
+
+
+```
+
+Removing unnecessary columns for model and performing onehotencoding on Species and Island column
+
+
+```{r}
+
+df1 = subset(data, select = -c(IndividualID) )
+
+
+cols_to_encode <- c("Species", "Island")
+
+# Perform one-hot encoding
+one_hot_encoded <- model.matrix(~.-1 + ., data = df1[, cols_to_encode])
+
+# Combine the one-hot-encoded matrix with the original dataframe
+df1 <- cbind(df1, one_hot_encoded)
+
+
+# Remove the original categorical columns
+df1 <- df1[, !names(df1) %in% cols_to_encode]
+
+
+df1
+
+
+```
+
+
+
+Making 10 fold k val, setting predictions to true to save our results. 
+
+```{r}
+library(caret)
+
+ctrl<- trainControl(method  = "cv", number  = 10, savePredictions = TRUE)
+
+```
+
+Making model and speculating it 
+
+```{r}
+
+model <- train(Gender ~ ., data = df1, method = "rpart", trControl = ctrl)
+
+
+# Using names() function
+variable_names <- names(df1)
+print(variable_names)
+
+
+
+# Summarize the model
+print(model)
+
+
+```
+
+Visualizing the best model using R part
+
+```{r}
+
+library(rpart.plot)
+rpart.plot(model$finalModel)
+
+```
+
+
+Checking accuracy using confusion Matrix
+
+```{r}
+df1$Gender <- factor(df1$Gender)
+
+conf_matrix <- confusionMatrix(predict(model, newdata = df1), df1$Gender)
+print(conf_matrix)
+
+```
+
+Predicting Gender
+
+```{r}
+
+df1 <- read.csv2("E:\\AppDS Semester 1\\IML assignment\\Decision Tree Modelling using pengiun dataset\\PenguinsWithoutMissingValues.csv")
+
+
+cols_to_encode <- c("Species", "Island")
+
+df1 = subset(df1, select = -c(IndividualID) )
+
+
+# Perform one-hot encoding
+one_hot_encoded <- model.matrix(~.-1 + ., data = df1[, cols_to_encode])
+
+# Combine the one-hot-encoded matrix with the original dataframe
+df1 <- cbind(df1, one_hot_encoded)
+
+
+# Remove the original categorical columns
+df1 <- df1[, !names(df1) %in% cols_to_encode]
+
+df1
+
+```
+
+Making predictions
+
+```{r}
+
+# Using names() function
+variable_names <- names(df1)
+print(variable_names)
+
+
+# Use the trained model to make predictions on the new data
+predictions <- predict(model, newdata = df1)
+
+# Print or use the predictions as needed
+print(predictions)
+
+```
+
+Adding predicted values to the dataframe that does not have gender variable, we predicted it and now we,re gonna add it to the df. 
+
+```{r}
+df1 = subset(data2, select = -c(Gender) )
+
+combined_df <- cbind(df1, predictions)
+
+#renameing predictions to Gender
+colnames(combined_df)[colnames(combined_df) == "predictions"] <- "Gender"
+
+
+head(combined_df)
+
+```
+

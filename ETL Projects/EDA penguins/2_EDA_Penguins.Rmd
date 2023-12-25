@@ -1,0 +1,311 @@
+---
+title: "EDA Pengium Dataset"
+author: "Harris Rizwan"
+date: "2023-12-19"
+output: html_document
+---
+
+```{r}
+
+install.packages("ggplot2")
+install.packages("GGally")
+install.packages("dplyr")
+install.packages("plotly")
+install.packages("psych")
+install.packages("doBy")
+install.packages("doBy")
+
+
+library(ggplot2)
+library(GGally)
+library(dplyr)
+library(plotly)
+library(psych)
+library(doBy)
+
+```
+
+```{r}
+
+# Read CSV file into a data frame
+df1 <- read.csv2("E:\\AppDS Semester 1\\IML assignment\\EDA penguins\\PenguinsWithoutMissingValues.csv")
+head(df1)
+
+```
+We have semicolon (;) as seperator in csv instead of comma(,) . So
+
+
+
+Exercise 1. How many observations do we have? How many variables?
+Ans:No of colums are 8. 
+
+Code:
+
+```{r}
+
+
+num_columns <- ncol(df1)
+num_columns
+```
+
+Exercise 2. What are the names of the observed variables?
+Ans: Name of variables are "IndividualID",  "Species",  "Island",  "CulmenLength_mm" "CulmenDepth_mm",  "FlipperLength_mm",  "BodyMass_g",  "Gender"    
+
+Code:
+
+```{r}
+
+variable_names <- names(df1)
+variable_names
+```
+
+Exercise 3. Provide a summary statistics of the columns?
+Ans: 6 variables are right skewed and two variables are left skewed as can be observed under skew variable of detailed_summary
+
+Code:
+```{r}
+
+
+# Use describe() from psych for more detailed summary statistics
+detailed_summary <- describe(df1)
+
+# Print the detailed summary statistics
+detailed_summary
+
+```
+
+Exercise 4. How many penguins per Species are there?
+Ans: No of Pengiuns per Adelie Spcies are 146, No of Pengiuns per Chinstrap  Spcies are 68, No of Pengiuns per Gentoo  Spcies are 119 
+
+Code:
+
+```{r}
+
+library(dplyr)
+
+library(magrittr)
+
+
+# df1 is my dataframe
+penguins_per_species <- df1 %>%
+  group_by(Species) %>%
+  summarize(Count = n())
+penguins_per_species
+
+# i believe this is better way to do it, it is less code :P
+
+species_counts <- table(df1$Species)
+species_counts
+```
+
+
+Exercise 5. How many penguins per Species and Gender are there?
+Ans: There are total 146 Adelie specie pengiuns from which 73 are female and 73 are male, 
+there are total 68 Chinstrap specie pengiuns from which 34 are female and 34 are male, there are total 119 Gentoo specie pengiuns from which 58 are female and 61 are male
+Code:
+
+```{r}
+
+
+# Pengiun per specie and gender
+penguins_count <- df1 %>%
+  group_by(Species, Gender) %>%
+  summarize(Count = n())
+
+penguins_count
+```
+
+Exercise 6. Show a BodyMass_g statistics per Species and Gender?
+Ans: This observation aligns with a common trend in many bird species where males are often larger than females. The difference in body mass can be attributed to various factors, including reproductive roles, foraging patterns, and environmental conditions
+
+Code:
+
+```{r}
+
+library(dplyr)
+
+# Grouping by Species, and Gender and calculating descriptive statistics
+summary_table <- df1 %>%
+  group_by(Species, Gender) %>%
+  summarize(
+    Number_of_Observations = n(),
+    Min_BodyMass = min(BodyMass_g	),
+    Median_BodyMass = median(BodyMass_g	),
+    Mean_BodyMass = mean(BodyMass_g	),
+    Max_BodyMass = max(BodyMass_g	)
+  )
+
+
+# View the resulting table
+summary_table
+
+
+
+```
+
+Exercise 7. Quantitative statistics per Species and Gender?
+Ans: For Adelie penguins, both males and females have similar numbers of observations (73 each), but males tend to have a higher mean culmen length, culmen depth, and body mass compared to females
+
+Code:
+
+```{r}
+
+
+library(dplyr)
+
+# Grouping by Island, Species, and Gender and calculating descriptive statistics
+statistics_table <- df1 %>%
+  group_by(Species, Gender) %>%
+  summarize(
+    Number_of_Observations = n(),                
+    Mean_CulmenLength_mm = mean(CulmenLength_mm),
+    Mean_CulmenDepth_mm = mean(CulmenDepth_mm),
+    Mean_FlipperLength_mm = mean(FlipperLength_mm),
+    Mean_BodyMass_g = mean(BodyMass_g)  
+  )
+
+# View the resulting table
+print(statistics_table)
+
+
+```
+
+
+
+Exercise no 8:
+Ans:
+
+Code:
+
+```{r}
+
+# Extract numerical variables
+numerical_vars <- df1 %>%
+  select_if(is.numeric)
+
+# Pairs plot for numerical variables
+ggpairs(numerical_vars)
+
+# Pairs plot with color by Species
+ggpairs(df1, columns = 4:7, aes(color = Species))
+
+```
+
+Exercise no 9:
+Ans:
+
+Code:
+
+```{r}
+library(ggplot2)
+
+# Standard Histogram
+ggplot(df1, aes(x = CulmenLength_mm)) +
+  geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
+  labs(title = "Standard Histogram", x = "Culmen Length (mm)", y = "Frequency")
+
+
+
+# Histogram with Different Colors for Different Species
+ggplot(df1, aes(x = CulmenLength_mm, fill = Species)) +
+  geom_histogram(binwidth = 1, color = "black", position = "identity", alpha = 0.7) +
+  labs(title = "Histogram by Species", x = "Culmen Length (mm)", y = "Frequency") +
+  scale_fill_manual(values = c("Adelie" = "skyblue", "Chinstrap" = "lightgreen", "Gentoo" = "salmon"))
+
+# Facet Plot with Histograms for Different Species
+ggplot(df1, aes(x = CulmenLength_mm, fill = Species)) +
+  geom_histogram(binwidth = 1, color = "black", position = "identity", alpha = 0.7) +
+  facet_wrap(~Species, scales = "free") +
+  labs(title = "Facet Plot by Species", x = "Culmen Length (mm)", y = "Frequency") +
+  scale_fill_manual(values = c("Adelie" = "skyblue", "Chinstrap" = "lightgreen", "Gentoo" = "salmon"))
+
+# Facet Plot with Histograms for Different Species and Gender
+ggplot(df1, aes(x = CulmenLength_mm, fill = Gender)) +
+  geom_histogram(binwidth = 1, color = "black", position = "identity", alpha = 0.7) +
+  facet_grid(Species ~ Gender, scales = "free") +
+  labs(title = "Facet Plot by Species and Gender", x = "Culmen Length (mm)", y = "Frequency") +
+  scale_fill_manual(values = c("MALE" = "skyblue", "FEMALE" = "salmon"))
+
+
+```
+Exercise no 10
+Ans:
+
+Code:
+
+```{r}
+
+# Density plot for CulmenLength_mm for different Species, facet_grid by Gender
+ggplot(df1, aes(x = CulmenLength_mm, fill = Species)) +
+  geom_density(alpha = 0.5) +
+  facet_grid(Gender ~ .) +
+  labs(title = "Density plot for CulmenLength_mm by Species (facet_grid: Gender)",
+       x = "CulmenLength_mm",
+       y = "Density")
+
+# Density plot for CulmenLength_mm for different Species, facet_grid by Island
+ggplot(df1, aes(x = CulmenLength_mm, fill = Species)) +
+  geom_density(alpha = 0.5) +
+  facet_grid(Island ~ .) +
+  labs(title = "Density plot for CulmenLength_mm by Species (facet_grid: Island)",
+       x = "CulmenLength_mm",
+       y = "Density")
+
+```
+
+Exercise no 11:
+
+```{r}
+
+# Boxplot for CulmenLength_mm
+ggplot(df1, aes(x = "", y = CulmenLength_mm)) +
+  geom_boxplot() +
+  labs(title = "Boxplot for CulmenLength_mm",
+       x = "",
+       y = "CulmenLength_mm")
+
+# Boxplot for CulmenLength_mm, color by Species, facet_grid by Gender
+ggplot(df1, aes(x = "", y = CulmenLength_mm, fill = Species)) +
+  geom_boxplot() +
+  facet_grid(Gender ~ .) +
+  labs(title = "Boxplot for CulmenLength_mm (facet_grid: Gender, colored by Species)",
+       x = "",
+       y = "CulmenLength_mm")
+
+
+```
+
+Exercise no 12:
+
+```{r}
+
+# Scatterplot for CulmenLength_mm and BodyMass_g, color by Species, facet_grid by Gender
+ggplot(df1, aes(x = CulmenLength_mm, y = BodyMass_g, color = Species)) +
+  geom_point() +
+  facet_grid(Gender ~ .) +
+  labs(title = "Scatterplot for CulmenLength_mm and BodyMass_g (facet_grid: Gender, colored by Species)",
+       x = "CulmenLength_mm",
+       y = "BodyMass_g")
+
+```
+Exercise no 13:
+
+```{r}
+
+# Create ggplot scatterplot
+gg_scatterplot <- ggplot(df1, aes(x = CulmenLength_mm, y = BodyMass_g, color = Species, text = IndividualID)) +
+  geom_point() +
+  facet_grid(Gender ~ .) +
+  labs(title = "Interactive Scatterplot with ggplotly (facet_grid: Gender, colored by Species)",
+       x = "CulmenLength_mm",
+       y = "BodyMass_g")
+
+# Convert ggplot to ggplotly
+ggplotly(gg_scatterplot, tooltip = "text") 
+
+
+```
+
+
+
+
